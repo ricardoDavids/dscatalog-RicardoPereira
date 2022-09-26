@@ -32,4 +32,12 @@ public class CategoryService {
 		Category entity = obj.orElseThrow(()-> new EntityNotFoundException("Entity not found "));// O metodo do get do Optional ele obtem aquele objecto que estava dentro do optional, entao obtendo essa entidade que eu busquei dentro do banco de dados, irei mandar retornar dentro do meu metodo
 		return new CategoryDTO(entity);
 	}
+	
+	@Transactional
+	public CategoryDTO insert(CategoryDTO dto) {
+		Category entity = new Category();
+		entity.setName(dto.getName());
+		entity=repository.save(entity);
+		return new CategoryDTO(entity);
+	}
 }
