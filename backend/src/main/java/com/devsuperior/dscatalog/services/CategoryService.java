@@ -7,12 +7,15 @@ import java.util.stream.Collectors;
 import javax.persistence.EntityNotFoundException;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.devsuperior.dscatalog.dto.CategoryDTO;
 import com.devsuperior.dscatalog.entities.Category;
 import com.devsuperior.dscatalog.repositories.CategoryRepository;
+import com.devsuperior.dscatalog.services.exceptions.DatabaseException;
 import com.devsuperior.dscatalog.services.exceptions.ResourceNotFoundException;
 
 @Service // Todo o framework moderno tem algum mecanismo de injecção de dependencia automatizado 
@@ -61,4 +64,18 @@ public class CategoryService {
 		}
 		
 	}
+
+	public void delete(Long id) {
+		try { //caso eu tente deletar um ID que não existe, acontece uma excepção(EmptyResultDataAccessException)
+			repository.deleteById(id);		
+		
+	}
+	catch(EmptyResultDataAccessException e) {
+		throw new ResourceNotFoundException("Id not found " + id);
+		
+	}
+		catch(DataIntegrityViolationException e) { //CASO OCORRA ESSA EXCEPÇÃO, EU VOU LANÇAR UMA EXCEPÇÃO DE SERVIÇO PERSONALIZADA, SÓ QUE AGORA NESTE CASO NAO FAZ SENTIDO EU LANÇAR UMA "RESOURCENOTFOUNDEXCEPTION", VOU TER QUE LANÇAR UMA EXCEPÇÃO DIFERENTE
+			throw new DatabaseException("Integrity violation");
+		}
+  }
 }
