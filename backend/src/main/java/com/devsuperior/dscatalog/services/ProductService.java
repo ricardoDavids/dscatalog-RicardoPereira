@@ -12,8 +12,11 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.devsuperior.dscatalog.dto.CategoryDTO;
 import com.devsuperior.dscatalog.dto.ProductDTO;
+import com.devsuperior.dscatalog.entities.Category;
 import com.devsuperior.dscatalog.entities.Product;
+import com.devsuperior.dscatalog.repositories.CategoryRepository;
 import com.devsuperior.dscatalog.repositories.ProductRepository;
 import com.devsuperior.dscatalog.services.exceptions.DatabaseException;
 import com.devsuperior.dscatalog.services.exceptions.ResourceNotFoundException;
@@ -23,6 +26,9 @@ public class ProductService {
 
 	@Autowired
 	private ProductRepository repository;
+	
+	@Autowired
+	private CategoryRepository categoryRepository;
 	
 	@Transactional(readOnly = true)
 	public Page<ProductDTO> findAllPaged(PageRequest pageRequest){
@@ -41,7 +47,7 @@ public class ProductService {
 	@Transactional
 	public ProductDTO insert(ProductDTO dto) {
 		Product entity = new Product();
-		//entity.setName(dto.getName());
+		copyDtoToEntity(dto,entity);
 		entity=repository.save(entity);
 		return new ProductDTO(entity);
 	}
@@ -56,6 +62,7 @@ public class ProductService {
 		// Quais são os dados aqui de atualização que vem no dto? No caso da categoria é somente o nome.
 		Product entity = repository.getOne(id); //Neste caso aqui, em versoes mais recentes do Spring Boot, o nome da função mudou para: getReferenceById
 		//entity.setName(dto.getName());
+		copyDtoToEntity(dto,entity);
 		entity= repository.save(entity);
 		return new ProductDTO(entity);
 		}
@@ -65,6 +72,7 @@ public class ProductService {
 		
 	}
 
+	
 	public void delete(Long id) {
 		try { //caso eu tente deletar um ID que não existe, acontece uma excepção(EmptyResultDataAccessException)
 			repository.deleteById(id);		
@@ -77,5 +85,22 @@ public class ProductService {
 		catch(DataIntegrityViolationException e) { //CASO OCORRA ESSA EXCEPÇÃO, EU VOU LANÇAR UMA EXCEPÇÃO DE SERVIÇO PERSONALIZADA, SÓ QUE AGORA NESTE CASO NAO FAZ SENTIDO EU LANÇAR UMA "RESOURCENOTFOUNDEXCEPTION", VOU TER QUE LANÇAR UMA EXCEPÇÃO DIFERENTE
 			throw new DatabaseException("Integrity violation");
 		}
-  }
+	}
+	
+	/* Explicação acerca do metodo infra: nos apontamentos -> 1º Capitulo CRUD */
+	private void copyDtoToEntity(ProductDTO dto, Product entity) {
+		
+		entity.setName(dto.getName());
+		entity.setDescription(dto.getDescription());
+		entity.setDate(dto.getDate());
+		entity.setImgUrl(dto.getImgUrl());
+		entity.setPrice(dto.getPrice());
+		
+		entity.getCategories().clear();
+		for (CategoryDTO catDto : dto.getCategories()) {
+			Category category = categoryRepository.getOne(catDto.getId());
+			entity.getCategories().add(category);
+		}
+	}
+
 }
