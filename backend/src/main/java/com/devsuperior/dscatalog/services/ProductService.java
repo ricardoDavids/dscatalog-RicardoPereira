@@ -8,7 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,8 +31,8 @@ public class ProductService {
 	private CategoryRepository categoryRepository;
 	
 	@Transactional(readOnly = true)
-	public Page<ProductDTO> findAllPaged(PageRequest pageRequest){
-		Page<Product> list =repository.findAll(pageRequest);//Chamamos a busca paginada lá do repository,agora vamos ter que converter a lista de Product para a colecção equivalente a ProductDTO   // Fui lá no repository e busquei tds as categorias no banco de dados e guardei nessa lista de categorias, agora vou ter que converter essa Lista de Categorias para uma lista de CategoriaDTO
+	public Page<ProductDTO> findAllPaged(Pageable pageable){
+		Page<Product> list =repository.findAll(pageable);//Chamamos a busca paginada lá do repository,agora vamos ter que converter a lista de Product para a colecção equivalente a ProductDTO   // Fui lá no repository e busquei tds as categorias no banco de dados e guardei nessa lista de categorias, agora vou ter que converter essa Lista de Categorias para uma lista de CategoriaDTO
 		
 		return list.map(x->new ProductDTO(x));
 	}
@@ -45,21 +45,17 @@ public class ProductService {
 	}
 	
 	@Transactional
-	public ProductDTO insert(ProductDTO dto) {
+	public ProductDTO insert(ProductDTO dto) { 
 		Product entity = new Product();
 		copyDtoToEntity(dto,entity);
 		entity=repository.save(entity);
-		return new ProductDTO(entity);
+		return new ProductDTO(entity,entity.getCategories());
 	}
 
 	@Transactional
 	public ProductDTO update(Long id, ProductDTO dto) {
 		try {
-		/*Qual a diferença do findById para o getOne(id)? O findById, ele efectiva o acesso ao bd, ele vai lá no banco de dados(bd), trás os dados daquele objecto que vc procurou. O getOne ele nao toca no bd, ele vai instanciar um objecto provisorio com os dados ali e com esse Id naquele objecto
-		 * Só quando vc mandar salvar, ai sim é que ele vai no banco de dados, essa é a diferença, entao quando vc quiser atualizar um dado, vc usa o getOne para não ter que ir ate ao banco de dados sem necessidade  */
-		//Agora que aqui já estou com a entidade Product instanciada na memoria, eu irei atualizar os dados dela.
 		
-		// Quais são os dados aqui de atualização que vem no dto? No caso da categoria é somente o nome.
 		Product entity = repository.getOne(id); //Neste caso aqui, em versoes mais recentes do Spring Boot, o nome da função mudou para: getReferenceById
 		//entity.setName(dto.getName());
 		copyDtoToEntity(dto,entity);
